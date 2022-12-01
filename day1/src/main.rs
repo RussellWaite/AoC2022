@@ -48,13 +48,13 @@ fn read_file_test() {
 }
 
 #[test]
-fn day13_1_result_1_test() {
+fn day1_1_result_1_test() {
     assert_eq!(day1_1_result("test_input"), 24000);
     assert_eq!(day1_1_result("input"), 67622);
 }
 
 #[test]
-fn day13_2_result_1_test() {
+fn day1_2_result_1_test() {
     assert_eq!(day1_2_result("test_input"), 45000);
     assert_eq!(day1_2_result("input"), 201491); //66377 + 67492 + 67622);
 }
