@@ -1,20 +1,32 @@
 #[inline]
 pub fn day2_1_result(path: &str) -> u64 {
-    calculate_score_based_on_strategy(path, true)
+    //calculate_score_based_on_strategy(path, true)
+    calculate_score_based_on_strategy(path, part_1_score_picker)
 }
 
 #[inline]
 pub fn day2_2_result(path: &str) -> u64 { 
-    calculate_score_based_on_strategy(path, false)
+    calculate_score_based_on_strategy(path, part_2_score_picker)
 }
 
-fn calculate_score_based_on_strategy(path: &str, x_is_choice: bool) -> u64 {
+#[inline]
+fn part_1_score_picker(choice: (u64,u64)) -> u64{
+    choice.0
+}
+
+#[inline]
+fn part_2_score_picker(choice: (u64,u64)) -> u64{
+    choice.1
+}
+
+#[inline]
+fn calculate_score_based_on_strategy(path: &str, score_picker: fn((u64, u64)) -> u64) -> u64 {
     let data = read_file(path);
     
     let result = data.lines()
         .map(|line| {
             match line {
-                "A X" => (4,3),
+                "A X" => (4u64,3u64),
                 "A Y" => (8,4),
                 "A Z" => (3,8),
                 "B X" => (1,1),
@@ -26,11 +38,12 @@ fn calculate_score_based_on_strategy(path: &str, x_is_choice: bool) -> u64 {
                 _ => panic!("whatever you've read in - it's BAD...")
             }
         })
-        .map(|(choice, strategy)| if x_is_choice { choice } else { strategy });
+        .map(score_picker);
 
     result.sum()
 }
 
+#[inline]
 fn read_file(path: &str) -> String {
     std::fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("couldn't open input file: {}", path))
