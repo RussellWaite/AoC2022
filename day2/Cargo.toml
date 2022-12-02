@@ -3,6 +3,19 @@ name = "day2"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "day2_solve"
+path = "src/lib.rs"
+
+[[bin]]
+name = "day2"
+path = "src/main.rs"
 
 [dependencies]
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "day2_benchmark"
+harness = false
