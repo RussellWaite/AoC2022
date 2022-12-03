@@ -10,6 +10,11 @@ pub fn day2_2_result(path: &str) -> u64 {
 }
 
 #[inline]
+pub fn day2_2_result_exp(path: &str) -> u64 { 
+    calculate_score_based_on_strategy(path, |x: (u64, u64)| x.1 )
+}
+
+#[inline]
 fn part_1_score_picker(choice: (u64,u64)) -> u64{
     choice.0
 }
