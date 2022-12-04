@@ -42,6 +42,60 @@ fn read_file(path: &str) -> Vec<(u8,u8,u8,u8)> {
     result
 }
 
+// ---------------------------------------------------------------------
+// github.com/codyphobe's gists I learned about on twitch.tv/realvoidboy
+//
+// added some wrapper code to make it easier to benchmark it like mine
+// ---------------------------------------------------------------------
+pub fn cody1(path: &str) -> usize {
+    
+    let data = std::fs::read_to_string(path)
+        .unwrap_or_else(|_| panic!("couldn't open input file: {}", path));
+    
+    part1(&data)    
+}
+
+pub fn cody2(path: &str) -> usize {
+    
+    let data = std::fs::read_to_string(path)
+        .unwrap_or_else(|_| panic!("couldn't open input file: {}", path));
+
+    part2(&data)
+}
+
+pub fn part1(input: &str) -> usize {
+    count_overlap_by(input, |(l, r)|
+        (l.0 <= r.0 && l.1 >= r.1) ||
+        (r.0 <= l.0 && r.1 >= l.1)
+    )
+}
+
+pub fn part2(input: &str) -> usize {
+    count_overlap_by(input, |(l, r)|
+        !(l.1 < r.0 || r.1 < l.0)
+    )
+}
+
+fn count_overlap_by<F>(input: &str, filter: F) -> usize
+where
+    F: Fn(&((u32, u32), (u32, u32))) -> bool
+{
+    input.lines()
+        .flat_map(|p| p.split_once(',').and_then(|(l, r)| Some((
+            l.split_once('-').and_then(|(a, b)| Some((
+                a.parse().ok()?,
+                b.parse().ok()?,
+            )))?,
+            r.split_once('-').and_then(|(a, b)| Some((
+                a.parse().ok()?,
+                b.parse().ok()?,
+            )))?,
+        ))))
+        .filter(filter)
+        .count()
+}
+
+
 #[test]
 fn read_file_test() {
     let result = read_file("test_input");
