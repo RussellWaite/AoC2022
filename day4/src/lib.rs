@@ -2,9 +2,9 @@ pub fn day4_1_result(path: &str) -> usize {
     let result = read_file(path);
     
     result.iter()
-        .filter(|((a_start,a_end),(b_start,b_end))| 
-                a_start >=b_start && a_end<=b_end || 
-                b_start >= a_start && b_end<= a_end)
+        .filter(|(a_start,a_end,b_start,b_end)| 
+                a_start >= b_start && a_end <= b_end || 
+                b_start >= a_start && b_end <= a_end)
         .count()
 }
 
@@ -12,33 +12,33 @@ pub fn day4_2_result(path: &str) -> usize {
     let result = read_file(path);
     
     result.iter()
-        .filter(|((a_start,a_end),(b_start,b_end))| 
-             a_start >=b_start && a_end<=b_end || 
-             b_start >= a_start && b_end<= a_end || 
-             a_start <= b_start && a_end>= b_start || 
+        .filter(|(a_start,a_end,b_start,b_end)| 
+             a_start >= b_start && a_end <= b_end || 
+             b_start >= a_start && b_end <= a_end || 
+             a_start <= b_start && a_end >= b_start || 
              a_start >= b_start && a_start <= b_end
         )
         .count()
 }
 
-fn read_file(path: &str) -> Vec<((u64,u64),(u64,u64))> {
+fn read_file(path: &str) -> Vec<(u8,u8,u8,u8)> {
     let data = std::fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("couldn't open input file: {}", path));
 
-    let result: Vec<((u64,u64),(u64,u64))> = data.lines()
+    let result: Vec<(u8,u8,u8,u8)> = data.lines()
         .map(|line| {
-            let rooms: Vec<&str> = line.split(['-',',']).collect();
-            
-            match rooms.as_slice() {
-                [a,b,c,d] => {
-                    (
-                        (a.parse::<u64>().unwrap(),b.parse::<u64>().unwrap()),
-                        (c.parse::<u64>().unwrap(),d.parse::<u64>().unwrap())
-                    )
-                },
-                _ => panic!("wasn't 4 numbers on the lines - GAME OVER"),
-            }
-        }).collect();
+            let mut rooms = line.split(['-',',']);
+
+            (rooms.next(),rooms.next(), rooms.next(), rooms.next())
+        })
+        .map(|(a,b,c,d)| 
+             (
+                 a.unwrap().parse::<u8>().unwrap(),
+                 b.unwrap().parse::<u8>().unwrap(),
+                 c.unwrap().parse::<u8>().unwrap(),
+                 d.unwrap().parse::<u8>().unwrap()
+             ))
+        .collect();
     result
 }
 
