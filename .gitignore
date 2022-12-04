@@ -1,1 +1,6 @@
 /target
+callgrind*
+valgrind*
+flamegraph*
+perf.data
+dhat*
