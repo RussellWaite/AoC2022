@@ -1,0 +1,21 @@
+[package]
+name = "day4"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "day4_solve"
+path = "src/lib.rs"
+
+[[bin]]
+name = "day4"
+path = "src/main.rs"
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "day4_benchmark"
+harness = false
