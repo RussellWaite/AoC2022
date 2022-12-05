@@ -27,7 +27,7 @@ pub fn day5_1(path: &str, test: bool) -> String {
 
 // fudge for testing as didn't code around dynamic sized input
 fn day5_2(path: &str, test: bool) -> String {
-     let (stack, instructions)  = if test {read_file(path, 3)} else {read_file(path, 8)};
+    let (stack, instructions)  = if test {read_file(path, 3)} else {read_file(path, 8)};
     
     let mut stacks = if test {create_stacks_test(stack)} else {create_stacks(stack)};
     
@@ -44,12 +44,14 @@ fn day5_2(path: &str, test: bool) -> String {
 
 fn create_stacks(data: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
     let mut transposed: Vec<Vec<u8>> = vec![vec![];9];
-    data.iter().rev().map(|bytes| 
-                    [bytes[1],bytes[5],bytes[9],
-                     bytes[13],bytes[17],bytes[21],
-                     bytes[25],bytes[29],bytes[33]].to_vec()
-                    )
-        .flatten()
+    data.iter()
+        .rev()
+        .flat_map(|bytes| 
+                    [
+                        bytes[1],bytes[5],bytes[9],
+                        bytes[13],bytes[17],bytes[21],
+                        bytes[25],bytes[29],bytes[33]
+                    ].to_vec())
         .enumerate()
         .for_each(|(index,char)| {
             if char > 64u8 && char < 91u8 {
@@ -63,12 +65,9 @@ fn create_stacks(data: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
 // this is sickeningly dirty
 fn create_stacks_test(data: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
     let mut transposed: Vec<Vec<u8>> = vec![vec![];3];
-    println!("-----------------");
-    println!("{:?}",data);
-    data.iter().rev().map(|bytes| 
-                    [bytes[1],bytes[5],bytes[9]].to_vec()
-                    )
-        .flatten()
+    data.iter()
+        .rev()
+        .flat_map(|bytes| [bytes[1],bytes[5],bytes[9]].to_vec())
         .enumerate()
         .for_each(|(index,char)| {
             if char > 64u8 && char < 91u8 {
@@ -89,7 +88,7 @@ fn read_file(path: &str, max_start_stack_size: usize) -> (Vec<Vec<u8>>, Vec<Vec<
             .map(|line| line.as_bytes().to_vec())
             .collect::<Vec<Vec<u8>>>();
 
-    let instructions = raw_data.as_str().lines()
+    let instructions = raw_data.lines()
             .skip(max_start_stack_size+2)
             .map(|line| line.split(' '))
             .map(|words| words.filter_map(
