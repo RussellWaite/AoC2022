@@ -1,17 +1,7 @@
 pub fn day5_1_result(path: &str) -> String {
-    day5_1(path, false)
-}
+    let (stack, instructions)  = read_file(path);
+    let mut stacks = create_stacks(stack);
 
-pub fn day5_2_result(path: &str) -> String {
-    day5_2(path, false)
-}
-
-// fudge for testing as didn't code around dynamic sized input
-pub fn day5_1(path: &str, test: bool) -> String {
-    let (stack, instructions)  = if test {read_file(path, 3)} else {read_file(path, 8)};
-    
-    let mut stacks = if test {create_stacks_test(stack)} else {create_stacks(stack)};
-    
     instructions.iter()
         .map(|i| (i[0],i[1], i[2]))
         .for_each(|(count, from, to)| {
@@ -22,74 +12,56 @@ pub fn day5_1(path: &str, test: bool) -> String {
             });
         });
 
-    stacks.iter().map(|stack| *stack.last().unwrap() as char).collect() 
+    stacks.iter().map(|stack| *stack.last().unwrap_or(&32u8) as char).collect() 
 }
 
-// fudge for testing as didn't code around dynamic sized input
-fn day5_2(path: &str, test: bool) -> String {
-    let (stack, instructions)  = if test {read_file(path, 3)} else {read_file(path, 8)};
-    
-    let mut stacks = if test {create_stacks_test(stack)} else {create_stacks(stack)};
-    
+pub fn day5_2_result(path: &str) -> String {
+    let (stack, instructions)  = read_file(path);
+
+    let mut stacks = create_stacks(stack);
+
     instructions.iter()
         .map(|i| (i[0],i[1], i[2]))
         .for_each(|(count, from, to)| {
-                let index = stacks[from as usize - 1].len() - count as usize;
-                let mut movement = stacks[from as usize - 1].drain(index..).collect();
-                stacks[to as usize - 1].append(&mut movement);
+            let index = stacks[from as usize - 1].len() - count as usize;
+            let mut movement = stacks[from as usize - 1].drain(index..).collect();
+            stacks[to as usize - 1].append(&mut movement);
         });
 
     stacks.iter().map(|stack| *stack.last().unwrap() as char).collect()
 }
 
 fn create_stacks(data: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
-    let mut transposed: Vec<Vec<u8>> = vec![vec![];9];
+    let num_of_stacks = 1 + data.first().unwrap().len()/4;
+    let mut transposed: Vec<Vec<u8>> = vec![vec![];num_of_stacks];
     data.iter()
         .rev()
-        .flat_map(|bytes| 
-                    [
-                        bytes[1],bytes[5],bytes[9],
-                        bytes[13],bytes[17],bytes[21],
-                        bytes[25],bytes[29],bytes[33]
-                    ].to_vec())
+        .skip(1) // the line with index numbers   
+        .flat_map(|bytes|
+            bytes.chunks(4).map(|quad| quad[1]).collect::<Vec<u8>>())
         .enumerate()
         .for_each(|(index,char)| {
             if char > 64u8 && char < 91u8 {
-                transposed[index % 9].push(char);
+                transposed[index % num_of_stacks].push(char);
             }
         });
 
     transposed
 }
 
-// this is sickeningly dirty
-fn create_stacks_test(data: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
-    let mut transposed: Vec<Vec<u8>> = vec![vec![];3];
-    data.iter()
-        .rev()
-        .flat_map(|bytes| [bytes[1],bytes[5],bytes[9]].to_vec())
-        .enumerate()
-        .for_each(|(index,char)| {
-            if char > 64u8 && char < 91u8 {
-                transposed[index % 3].push(char);
-            }
-        });
-    transposed
-}
-
-fn read_file(path: &str, max_start_stack_size: usize) -> (Vec<Vec<u8>>, Vec<Vec<u8>>) {
+fn read_file(path: &str) -> (Vec<Vec<u8>>, Vec<Vec<u8>>) {
     
     let raw_data = std::fs::read_to_string(path)
         .unwrap_or_else(
             |_| panic!("couldn't open input file: {}", path));    
     
     let state = raw_data.lines()
-            .take(max_start_stack_size)
+            .take_while(|line| !line.is_empty())
             .map(|line| line.as_bytes().to_vec())
             .collect::<Vec<Vec<u8>>>();
 
     let instructions = raw_data.lines()
-            .skip(max_start_stack_size+2)
+            .skip_while(|line| !line.starts_with("move "))
             .map(|line| line.split(' '))
             .map(|words| words.filter_map(
                     |word| word.parse::<u8>().ok()
@@ -102,20 +74,20 @@ fn read_file(path: &str, max_start_stack_size: usize) -> (Vec<Vec<u8>>, Vec<Vec<
 
 #[test]
 fn read_file_test() {
-    let (stack, instructions) = read_file("test_input", 3);
+    let (stack, instructions) = read_file("test_input");
     // assert_eq!(stack.len(), 3);
 }
 
 #[test]
 fn day5_1_result_1_test() {
-    assert_eq!(day5_1("test_input", true), "CMZ");
+    assert_eq!(day5_1_result("test_input"), "CMZ");
 
     assert_eq!(day5_1_result("input"), "MQTPGLLDN");
 }
 
 #[test]
 fn day5_2_result_1_test() {
-    assert_eq!(day5_2("test_input", true), "MCD");
+    assert_eq!(day5_2_result("test_input"), "MCD");
     
     assert_eq!(day5_2_result("input"), "LVZPSTTCZ");
 }
