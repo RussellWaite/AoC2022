@@ -12,19 +12,18 @@ fn common_solver(data:&str, unique_count: usize) -> usize {
     let (_, start_of_packet, _, _) =  data
         .chars()
         .fold((vec![' ';unique_count], 0usize, unique_count as i32 - 3i32, false), 
-            |(mut prev_fourteen, index, mut dup_count_down, mut found), next_char| {
+            |(mut window, index, mut last_dupe_seen, mut found), next_char| {
             
-                if found { return (prev_fourteen, index, 0, found); }
+                if found { return (window, index, 0, found); }
                 
-                if dup_count_down == -1 { found = true; }
+                if last_dupe_seen == -1 { found = true; }
 
-                prev_fourteen.remove(0);
+                window.remove(0);
 
-                if prev_fourteen.contains(&next_char) {
-                    
-                    dup_count_down = std::cmp::max(
-                        dup_count_down,
-                        prev_fourteen
+                if window.contains(&next_char) {
+                    last_dupe_seen = std::cmp::max(
+                        last_dupe_seen,
+                        window
                             .iter()
                             .enumerate()
                             .filter(|(_i,c)| **c == next_char)
@@ -35,13 +34,13 @@ fn common_solver(data:&str, unique_count: usize) -> usize {
                     found = false;
                 }
                 // println!(" STEP: {:?} {} | {}({})|{}", prev_fourteen, next_char, index, dup_count_down, found);
-                prev_fourteen.push(next_char);
+                window.push(next_char);
                 
-                if dup_count_down > -1 { dup_count_down-=1; }
+                if last_dupe_seen > -1 { last_dupe_seen-=1; }
 
-                if index < unique_count { return (prev_fourteen, index+1, dup_count_down, false); }
+                if index < unique_count { return (window, index+1, last_dupe_seen, false); }
 
-                (prev_fourteen, index+1, dup_count_down, found)
+                (window, index+1, last_dupe_seen, found)
         }); 
     
     start_of_packet 
