@@ -39,16 +39,34 @@ impl Node {
             },
             [b'$', b' ', b'l', b's'] => FsLine::Ls,
             [b'd',b'i', b'r', b' ', rest @ ..] => {
-                let mut split = line.rsplit(|c| *c == b' ');
-                let char_array = split.next().unwrap();
-                return FsLine::Dir(std::str::from_utf8(char_array).unwrap());
+                let mut split_index = 0usize;
+                for idx in 0..rest.len() {
+                    if rest[idx] == b' ' {
+                        split_index = idx;
+                        break;
+                    }
+                }
+            
+                return FsLine::Dir(std::str::from_utf8(rest.split_at(split_index).1).unwrap());
+                // let mut split = line.rsplit(|c| *c == b' ');
+                // let char_array = split.next().unwrap();
+                // return FsLine::Dir(std::str::from_utf8(char_array).unwrap());
             },
             _ => {
+                let mut split_index = 0usize;
+                for idx in 0..line.len() {
+                    if line[idx] == b' ' {
+                        split_index = idx;
+                        break;
+                    }
+                }
                 
-                let mut split = line.split(|c| *c == b' ');
-                let char_array = split.next().unwrap();
-                let number = std::str::from_utf8(char_array).unwrap();
+                let number = std::str::from_utf8(line.split_at(split_index).0).unwrap();
                 FsLine::File(number.parse().unwrap())
+                // let mut split = line.split(|c| *c == b' ');
+                // let char_array = split.next().unwrap();
+                // let number = std::str::from_utf8(char_array).unwrap();
+                // FsLine::File(number.parse().unwrap())
             }
         }
     }
