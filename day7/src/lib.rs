@@ -1,16 +1,13 @@
-use std::time::Instant;
-
 #[derive(Clone, Debug)]
 pub struct Node {
-    name: String,
     children: Vec<Node>,
     files: Vec<u64>,
 }
 
-pub enum FsLine<'a> {
-    Pushd(&'a str),
+pub enum FsLine {
+    Pushd,
     Popd,
-    Dir(&'a str),
+    Dir,
     File(u64),
     Ls,
     Error,
@@ -19,7 +16,6 @@ pub enum FsLine<'a> {
 impl Node {
     pub fn new() -> Node {
         Node {
-            name: "/".to_string(),
             children: vec!(),
             files: vec![],
         }
@@ -34,20 +30,12 @@ impl Node {
             [b'$', b' ', b'c', b'd', b' ', rest @..] => {
                 match rest {
                     b".." => FsLine::Popd,
-                    name => FsLine::Pushd(std::str::from_utf8(&name).unwrap()),
+                    name => FsLine::Pushd,
                 }
             },
             [b'$', b' ', b'l', b's'] => FsLine::Ls,
             [b'd',b'i', b'r', b' ', rest @ ..] => {
-                let mut split_index = 0usize;
-                for idx in 0..rest.len() {
-                    if rest[idx] == b' ' {
-                        split_index = idx;
-                        break;
-                    }
-                }
-            
-                return FsLine::Dir(std::str::from_utf8(rest.split_at(split_index).1).unwrap());
+                return FsLine::Dir;
                 // let mut split = line.rsplit(|c| *c == b' ');
                 // let char_array = split.next().unwrap();
                 // return FsLine::Dir(std::str::from_utf8(char_array).unwrap());
@@ -77,20 +65,17 @@ impl Node {
             match Node::parse_line(data[index].as_bytes()) {
             // match data[index].as_bytes() {
                 FsLine::Ls => (),
-                FsLine::Pushd(name) => {
-                    if name != "/" {
-                        let mut sub_dir = Node::new();
-                        sub_dir.name = name.to_string();
-                        let (sub_dir, jump_index) = Self::parse(&mut sub_dir, data, index + 1);
-                        node.children.push(sub_dir.clone());
-                        index = jump_index -1;
-                    }
+                FsLine::Pushd => {
+                    let mut sub_dir = Node::new();
+                    let (sub_dir, jump_index) = Self::parse(&mut sub_dir, data, index + 1);
+                    node.children.push(sub_dir.clone());
+                    index = jump_index -1;
                 },
                 FsLine::Popd => {
                     index += 1; 
                     break 'recurse;
                 },
-                FsLine::Dir(_) => (),
+                FsLine::Dir => (),
                 FsLine::File(size) => node.files.push(size),
                 FsLine::Error => panic!("How have you get here, you've probably messed up the test input"),
             }
@@ -99,20 +84,20 @@ impl Node {
         (node, index)
     }
 
-    fn directory_sizes(&self, state: &mut Vec<(String, u64)>) -> (String, u64) {//, &mut Vec<(String, u64)>) {
+    fn directory_sizes(&self, state: &mut Vec<u64>) -> u64 {//, &mut Vec<(String, u64)>) {
         let mut running_total = 0u64;
         if !self.is_leaf() { // get childrens' size, then your own 
             running_total += self
                 .children
                 .iter()
-                .map(|node| node.directory_sizes(state).1)
+                .map(|node| node.directory_sizes(state))
                 .sum::<u64>();
         }
         
         running_total += self.files.iter().sum::<u64>();
-        state.push((self.name.clone(), running_total));
+        state.push(running_total);
 
-        (self.name.clone(), running_total)
+        running_total
     }
 }
 pub fn day7_parse(data: &Vec<&str>) -> Node {
@@ -120,7 +105,8 @@ pub fn day7_parse(data: &Vec<&str>) -> Node {
     // let start = Instant::now();
 
     let mut root = Node::new();
-    let result = Node::parse(&mut root, &data, 0).0;
+    // idex of 1 means skip first `$ cd /`
+    let result = Node::parse(&mut root, &data, 1).0;
 
     // let duration = Instant::now() - start;
     // println!("PARSING TAKES {} μs", duration.as_micros());
@@ -129,28 +115,28 @@ pub fn day7_parse(data: &Vec<&str>) -> Node {
 }
 pub fn day7_1_result(fs: &Node) -> u64 {
 
-    let mut results: Vec<(String, u64)> = vec![];
-    let (_,_) = fs.directory_sizes(&mut results);
-    results.iter().filter(|(_, size)| *size <=100_000).map(|(_, size)| *size).sum()
+    let mut results: Vec<u64> = vec![];
+    let _ = fs.directory_sizes(&mut results);
+    results.iter().filter(|size| **size <=100_000).sum()
 }
 
 pub fn day7_2_result(fs: &Node) -> u64 {
     let total_space =    70_000_000;
     let free_space_req = 30_000_000; // 6090134
 
-    let mut results: Vec<(String, u64)> = vec![];
+    let mut results: Vec<u64> = vec![];
     fs.directory_sizes(&mut results);
     
     let space_taken = results.iter()
-        .map(|(_, size)| *size)
+        .map(|size| *size)
         .max()
         .unwrap();
 
     let space_needed = free_space_req - (total_space - space_taken);
 
     results.iter()
-        .filter(|(_, size)| *size >= space_needed)
-        .map(|(_, size)| *size)
+        .filter(|size| **size >= space_needed)
+        .map(|x|*x)
         .min()
         .unwrap()
 }
