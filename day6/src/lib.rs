@@ -1,13 +1,16 @@
 pub fn day6_1_result(data: &str) -> usize {
    let unique_counter = 4;
-   common_solver(data, unique_counter)
+   bytes_window_solver(data, unique_counter)
+   // common_solver(data, unique_counter)
 }
 
 pub fn day6_2_result(data: &str) -> usize {
     let unique_count = 14;
-    common_solver(data, unique_count)
+    bytes_window_solver(data, unique_count)
+    // common_solver(data, unique_count)
 }
 
+#[allow(dead_code)]
 fn common_solver(data:&str, unique_count: usize) -> usize {
     let (_, start_of_packet, _, _) =  data
         .chars()
@@ -21,16 +24,15 @@ fn common_solver(data:&str, unique_count: usize) -> usize {
                 window.remove(0);
 
                 if window.contains(&next_char) {
-                    last_dupe_seen = std::cmp::max(
-                        last_dupe_seen,
-                        window
-                            .iter()
-                            .enumerate()
-                            .filter(|(_i,c)| **c == next_char)
-                            .map(|(i,_c)| i as i32)
-                            .max()
-                            .unwrap()
-                        );
+                    last_dupe_seen = window
+                        .iter()
+                        .enumerate()
+                        .filter(|(_i,c)| **c == next_char)
+                        .map(|(i,_c)| i as i32)
+                        .max()
+                        .and_then(|max| std::cmp::max(Some(last_dupe_seen), Some(max)))
+                        .unwrap();
+
                     found = false;
                 }
                 // println!(" STEP: {:?} {} | {}({})|{}", prev_fourteen, next_char, index, dup_count_down, found);
@@ -44,6 +46,21 @@ fn common_solver(data:&str, unique_count: usize) -> usize {
         }); 
     
     start_of_packet 
+}
+
+// inspired from github.com/cark - WAY FASTER 
+fn bytes_window_solver(data: &str, unique_count: usize) -> usize {
+    let (i, _) = data
+        .as_bytes()
+        .windows(unique_count)
+        .enumerate()
+        .find(|(_idx,bw)| {
+            (0..bw.len())
+            .map(|win_idx| (bw[win_idx], &bw[win_idx+1..]))
+            .all(|(head, tail)| !tail.contains(&head))
+        })
+        .unwrap();
+        i
 }
 
 #[cfg(test)]
@@ -106,3 +123,4 @@ mod test {
         assert_eq!(day6_2_result(INPUT), 2508);
     }
 }
+
