@@ -1,8 +1,19 @@
+use std::time::Instant;
+
 #[derive(Clone, Debug)]
-struct Node {
+pub struct Node {
     name: String,
     children: Vec<Node>,
     files: Vec<u64>,
+}
+
+pub enum FsLine<'a> {
+    Pushd(&'a str),
+    Popd,
+    Dir(&'a str),
+    File(u64),
+    Ls,
+    Error,
 }
 
 impl Node {
@@ -17,28 +28,53 @@ impl Node {
     pub fn is_leaf(&self) -> bool {
         self.children.is_empty()
     }
+    
+    fn parse_line(line: &[u8]) -> FsLine {
+        match line {
+            [b'$', b' ', b'c', b'd', b' ', rest @..] => {
+                match rest {
+                    b".." => FsLine::Popd,
+                    name => FsLine::Pushd(std::str::from_utf8(&name).unwrap()),
+                }
+            },
+            [b'$', b' ', b'l', b's'] => FsLine::Ls,
+            [b'd',b'i', b'r', b' ', rest @ ..] => {
+                let mut split = line.rsplit(|c| *c == b' ');
+                let char_array = split.next().unwrap();
+                return FsLine::Dir(std::str::from_utf8(char_array).unwrap());
+            },
+            _ => {
+                
+                let mut split = line.split(|c| *c == b' ');
+                let char_array = split.next().unwrap();
+                let number = std::str::from_utf8(char_array).unwrap();
+                FsLine::File(number.parse().unwrap())
+            }
+        }
+    }
 
     fn parse<'a>(node: &'a mut Node, data: &'a [&'a str], mut index: usize) -> (&'a Node, usize) {
         'recurse: loop {
             if index >= data.len() { break 'recurse };
-            match data[index].split_whitespace().collect::<Vec<&str>>()[..] {
-                ["$","cd", ".."] => {
-                    index +=1;
+            match Node::parse_line(data[index].as_bytes()) {
+            // match data[index].as_bytes() {
+                FsLine::Ls => (),
+                FsLine::Pushd(name) => {
+                    if name != "/" {
+                        let mut sub_dir = Node::new();
+                        sub_dir.name = name.to_string();
+                        let (sub_dir, jump_index) = Self::parse(&mut sub_dir, data, index + 1);
+                        node.children.push(sub_dir.clone());
+                        index = jump_index -1;
+                    }
+                },
+                FsLine::Popd => {
+                    index += 1; 
                     break 'recurse;
                 },
-                ["$","cd", name] => {
-                    let mut sub_dir = Node::new();
-                    sub_dir.name = name.to_string();
-                    let (sub_dir, jump_index) = Self::parse(&mut sub_dir, data, index + 1);
-                    node.children.push(sub_dir.clone());
-                    index = jump_index -1;
-                },
-                ["$", "ls"] => (),
-                ["dir", _name] => (),
-                [size, _name] => {
-                    node.files.push(size.parse::<u64>().unwrap());
-                },
-                _ => (),
+                FsLine::Dir(_) => (),
+                FsLine::File(size) => node.files.push(size),
+                FsLine::Error => panic!("How have you get here, you've probably messed up the test input"),
             }
             index+=1;
         }
@@ -61,41 +97,52 @@ impl Node {
         (self.name.clone(), running_total)
     }
 }
+pub fn day7_parse(data: &Vec<&str>) -> Node {
 
-pub fn day7_1_result(data: &str) -> u64 {
-    let lines = data.lines().collect::<Vec<&str>>();
+    // let start = Instant::now();
+
     let mut root = Node::new();
-    let temp = Node::parse(&mut root, &lines, 0).0;
+    let result = Node::parse(&mut root, &data, 0).0;
+
+    // let duration = Instant::now() - start;
+    // println!("PARSING TAKES {} μs", duration.as_micros());
+    
+    result.to_owned() 
+}
+pub fn day7_1_result(fs: &Node) -> u64 {
+
     let mut results: Vec<(String, u64)> = vec![];
-    let (_,_) = temp.directory_sizes(&mut results);
+    let (_,_) = fs.directory_sizes(&mut results);
     results.iter().filter(|(_, size)| *size <=100_000).map(|(_, size)| *size).sum()
 }
 
-pub fn day7_2_result(data: &str) -> u64 {
+pub fn day7_2_result(fs: &Node) -> u64 {
     let total_space =    70_000_000;
     let free_space_req = 30_000_000; // 6090134
 
-    let lines = data.lines().collect::<Vec<&str>>();
-    let mut root = Node::new();
-    let temp = Node::parse(&mut root, &lines, 0).0;
     let mut results: Vec<(String, u64)> = vec![];
-    let (_,_) = temp.directory_sizes(&mut results);
-    results.sort_by(|a, b| a.1.cmp(&b.1));
-    // dbg!(&results);
+    fs.directory_sizes(&mut results);
     
     let space_taken = results.iter()
-    .map(|(_, size)| *size)
-    .max()
-    .unwrap();
+        .map(|(_, size)| *size)
+        .max()
+        .unwrap();
 
     let space_needed = free_space_req - (total_space - space_taken);
 
     results.iter()
-    .filter(|(_, size)| *size >= space_needed)
-    .map(|(_, size)| *size)
-    .min()
-    .unwrap()
+        .filter(|(_, size)| *size >= space_needed)
+        .map(|(_, size)| *size)
+        .min()
+        .unwrap()
+}
 
+const INPUT: &str = include_str!("../input");
+pub fn day7_all() {
+    let lines = INPUT.lines().collect::<Vec<&str>>();
+    let fs = day7_parse(&lines);
+    day7_1_result(&fs);
+    day7_2_result(&fs);
 }
 
 #[cfg(test)]
@@ -128,12 +175,17 @@ $ ls
 8033020 d.log
 5626152 d.ext
 7214296 k"###;
-        assert_eq!(day7_1_result(test_data), 95437);
+        let lines = test_data.lines().collect::<Vec<&str>>();
+        let fs = day7_parse(&lines);
+
+        assert_eq!(day7_1_result(&fs), 95437);
     }
 
     #[test]
     fn day7_1_result_live_test() {
-        assert_eq!(day7_1_result(INPUT), 1491614);
+        let lines = INPUT.lines().collect::<Vec<&str>>();
+        let fs = day7_parse(&lines);
+        assert_eq!(day7_1_result(&fs), 1491614);
     }
 
     #[test]
@@ -161,13 +213,17 @@ $ ls
 8033020 d.log
 5626152 d.ext
 7214296 k"###;
+        let lines = test_data.lines().collect::<Vec<&str>>();
+        let fs = day7_parse(&lines);
 
-        assert_eq!(day7_2_result(test_data), 24933642);
+        assert_eq!(day7_2_result(&fs), 24933642);
     }
 
     #[test]
     fn day7_2_result_live_test() {
-        assert_eq!(day7_2_result(INPUT), 6400111);
+        let lines = INPUT.lines().collect::<Vec<&str>>();
+        let fs = day7_parse(&lines);
+        assert_eq!(day7_2_result(&fs), 6400111);
     }
 }
 
