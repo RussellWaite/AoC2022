@@ -1,0 +1,21 @@
+[package]
+name = "day7"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "day7_solve"
+path = "src/lib.rs"
+
+[[bin]]
+name = "day7"
+path = "src/main.rs"
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "day7_benchmark"
+harness = false
