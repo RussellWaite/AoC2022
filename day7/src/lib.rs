@@ -30,16 +30,11 @@ impl Node {
             [b'$', b' ', b'c', b'd', b' ', rest @..] => {
                 match rest {
                     b".." => FsLine::Popd,
-                    name => FsLine::Pushd,
+                    _ => FsLine::Pushd,
                 }
             },
             [b'$', b' ', b'l', b's'] => FsLine::Ls,
-            [b'd',b'i', b'r', b' ', rest @ ..] => {
-                return FsLine::Dir;
-                // let mut split = line.rsplit(|c| *c == b' ');
-                // let char_array = split.next().unwrap();
-                // return FsLine::Dir(std::str::from_utf8(char_array).unwrap());
-            },
+            [b'd',b'i', b'r', b' ', ..] => FsLine::Dir,
             _ => {
                 let mut split_index = 0usize;
                 for idx in 0..line.len() {
@@ -51,10 +46,6 @@ impl Node {
                 
                 let number = std::str::from_utf8(line.split_at(split_index).0).unwrap();
                 FsLine::File(number.parse().unwrap())
-                // let mut split = line.split(|c| *c == b' ');
-                // let char_array = split.next().unwrap();
-                // let number = std::str::from_utf8(char_array).unwrap();
-                // FsLine::File(number.parse().unwrap())
             }
         }
     }
@@ -101,16 +92,10 @@ impl Node {
     }
 }
 pub fn day7_parse(data: &Vec<&str>) -> Node {
-
-    // let start = Instant::now();
-
     let mut root = Node::new();
-    // idex of 1 means skip first `$ cd /`
+    // index of 1 means skip first `$ cd /`
     let result = Node::parse(&mut root, &data, 1).0;
 
-    // let duration = Instant::now() - start;
-    // println!("PARSING TAKES {} μs", duration.as_micros());
-    
     result.to_owned() 
 }
 pub fn day7_1_result(fs: &Node) -> u64 {
