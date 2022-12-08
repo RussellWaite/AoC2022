@@ -24,7 +24,12 @@ impl Node {
     pub fn is_leaf(&self) -> bool {
         self.children.is_empty()
     }
-    
+    pub fn add_node(&mut self) -> &mut Node {
+        let child = Node::new();
+        self.children.push(child);
+        self.children.last_mut().unwrap()
+    }
+
     fn parse_line(line: &[u8]) -> FsLine {
         match line {
             [b'$', b' ', b'c', b'd', b' ', rest @..] => {
@@ -50,16 +55,14 @@ impl Node {
         }
     }
 
-    fn parse<'a>(node: &'a mut Node, data: &'a [&'a str], mut index: usize) -> (&'a Node, usize) {
+    fn parse<'a>(node: &'a mut Node, data: &'a [&'a str], mut index: usize) -> usize {
         'recurse: loop {
             if index >= data.len() { break 'recurse };
             match Node::parse_line(data[index].as_bytes()) {
             // match data[index].as_bytes() {
                 FsLine::Ls => (),
                 FsLine::Pushd => {
-                    let mut sub_dir = Node::new();
-                    let (sub_dir, jump_index) = Self::parse(&mut sub_dir, data, index + 1);
-                    node.children.push(sub_dir.clone());
+                    let jump_index = Self::parse(node.add_node(), data, index + 1);
                     index = jump_index -1;
                 },
                 FsLine::Popd => {
@@ -72,7 +75,7 @@ impl Node {
             }
             index+=1;
         }
-        (node, index)
+        index
     }
 
     fn directory_sizes(&self, state: &mut Vec<u64>) -> u64 {//, &mut Vec<(String, u64)>) {
@@ -91,12 +94,18 @@ impl Node {
         running_total
     }
 }
-pub fn day7_parse(data: &Vec<&str>) -> Node {
+
+impl Default for Node {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+pub fn day7_parse(data: &[&str]) -> Node {
     let mut root = Node::new();
     // index of 1 means skip first `$ cd /`
-    let result = Node::parse(&mut root, &data, 1).0;
-
-    result.to_owned() 
+    Node::parse(&mut root, data, 1);
+    root
+    // result.to_owned() 
 }
 pub fn day7_1_result(fs: &Node) -> u64 {
 
@@ -112,8 +121,7 @@ pub fn day7_2_result(fs: &Node) -> u64 {
     let mut results: Vec<u64> = vec![];
     fs.directory_sizes(&mut results);
     
-    let space_taken = results.iter()
-        .map(|size| *size)
+    let space_taken = results.iter().copied()
         .max()
         .unwrap();
 
@@ -121,7 +129,7 @@ pub fn day7_2_result(fs: &Node) -> u64 {
 
     results.iter()
         .filter(|size| **size >= space_needed)
-        .map(|x|*x)
+        .copied()
         .min()
         .unwrap()
 }

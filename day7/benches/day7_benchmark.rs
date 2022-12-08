@@ -15,7 +15,7 @@ pub fn criterion_benchmark_part2(c: &mut Criterion) {
 }
 
 pub fn criterion_benchmark_all(c: &mut Criterion) {
-    c.bench_function("day7all", |b| b.iter(|| day7_all()));
+    c.bench_function("day7all", |b| b.iter(day7_all));
 }
 criterion_group!(benches, criterion_benchmark_part1, criterion_benchmark_part2, criterion_benchmark_all);
 criterion_main!(benches);
