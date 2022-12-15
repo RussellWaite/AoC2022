@@ -1,7 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use day14_solve::{day14_1_result, day14_2_result};
 
-const INPUT: &[u8] = include_bytes!("../input");
+const INPUT: &str = include_str!("../input");
 pub fn criterion_benchmark_part1(c: &mut Criterion) {
     c.bench_function("day14part1", |b| b.iter(|| day14_1_result(black_box(INPUT))));
 }

@@ -3,7 +3,7 @@ use std::{usize, collections::VecDeque};
 pub fn day14_1_result(data: &str) -> u64 {
     let mut cave = Cave::new(data);
     cave.create_map();
-    cave.show_cave();
+    // cave.show_cave();
     cave.pour_sand()
 }
 
@@ -11,9 +11,8 @@ pub fn day14_2_result(data: &str) -> u64 {
    let data2 = format!("{}{}", data, "\n250,163 -> 700,163"); 
     let mut cave = Cave::new(data2.as_str());
     cave.create_map();
-    cave.show_cave();
+    // cave.show_cave();
     cave.pour_sand()
-// y = 163, x = ( - )
 }
 
 #[derive(Debug, Default)]
@@ -184,7 +183,6 @@ impl Cave {
          1 + self.bounds.to.x - self.bounds.from.x
     }
     pub fn pour_sand(&mut self) -> u64 {
-        println!("HERE COMES THE SAND: ");
         let sand_index = self.edge_to_index(&Self::SAND_ORIGIN);
         
         let mut sand_path: VecDeque<usize> = VecDeque::new();
@@ -195,7 +193,7 @@ impl Cave {
             if next == sand_index { break; }
             self.contents[next] = b'o';
         }
-        self.show_cave(); 
+        // self.show_cave(); 
 
         particles
     }
@@ -267,7 +265,7 @@ mod test {
 
     // #[test]
     fn day14_1_result_live_test() {
-        assert_eq!(day14_1_result(INPUT), 4809);
+        assert_eq!(day14_1_result(INPUT), 757);
     }
 
     // #[test]
@@ -277,7 +275,7 @@ mod test {
 
     // #[test]
     fn day14_2_result_live_test() {
-        // assert_eq!(day14_2_result(INPUT), 375);
+        // assert_eq!(day14_2_result(INPUT), 24943);
     }
     const TEST_INPUT: &str = r###"498,4 -> 498,6 -> 496,6
 503,4 -> 502,4 -> 502,9 -> 494,9"###;
