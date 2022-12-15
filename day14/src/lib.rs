@@ -8,7 +8,12 @@ pub fn day14_1_result(data: &str) -> u64 {
 }
 
 pub fn day14_2_result(data: &str) -> u64 {
-    0
+   let data2 = format!("{}{}", data, "\n250,163 -> 700,163"); 
+    let mut cave = Cave::new(data2.as_str());
+    cave.create_map();
+    cave.show_cave();
+    cave.pour_sand()
+// y = 163, x = ( - )
 }
 
 #[derive(Debug, Default)]
@@ -186,8 +191,8 @@ impl Cave {
         sand_path.push_back(sand_index);
         let mut particles:u64 = 0;
         while let Some(next) = self.next_sand_position(&mut sand_path) {
-            if next == sand_index { break; }
             particles += 1;
+            if next == sand_index { break; }
             self.contents[next] = b'o';
         }
         self.show_cave(); 
