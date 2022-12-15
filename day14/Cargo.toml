@@ -1,0 +1,22 @@
+[package]
+name = "day14"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "day14_solve"
+path = "src/lib.rs"
+
+[[bin]]
+name = "day14"
+path = "src/main.rs"
+
+[dependencies]
+nom = "7.1.1"
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "day14_benchmark"
+harness = false
