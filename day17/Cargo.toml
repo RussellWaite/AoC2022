@@ -1,0 +1,22 @@
+[package]
+name = "day17"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "day17_solve"
+path = "src/lib.rs"
+
+[[bin]]
+name = "day17"
+path = "src/main.rs"
+
+[dependencies]
+regex = "1.7.0"
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "day17_benchmark"
+harness = false
